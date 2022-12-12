@@ -7,7 +7,7 @@ DESCRIPTION = 'This package is written for MOS score prediction based on fine-tu
 URL = 'https://github.com/AndreevP/wvmos'
 EMAIL = 'andreev.pk@phystech.edu'
 AUTHOR = 'Pavel Andreev'
-REQUIRES_PYTHON = '>=3.9.0'
+REQUIRES_PYTHON = '>=3.7.0'
 VERSION = '1.0'
 
 setup(
