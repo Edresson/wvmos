@@ -30,8 +30,8 @@ def load_audio(audiopath, sr=16000):
     # stereo to mono if needed
     if audio.size(0) != 1:
         audio = torch.mean(audio, dim=0, keepdim=True)
-    if lsr != sampling_rate:
-        audio = torchaudio.functional.resample(audio, lsr, sampling_rate)
+    if lsr != sr:
+        audio = torchaudio.functional.resample(audio, lsr, sr)
     if torch.any(audio > 10) or not torch.any(audio < 0):
         print(f"Error with {audiopath}. Max={audio.max()} min={audio.min()}")
     # clip audio invalid values
