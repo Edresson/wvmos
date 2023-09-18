@@ -6,14 +6,33 @@ import librosa
 import tqdm
 import numpy as np
 from torch import nn
+import torchaudio
 
 def extract_prefix(prefix, weights):
     result = OrderedDict()
     for key in weights:
         if key.find(prefix) == 0:
             result[key[len(prefix):]] = weights[key]
-    return result     
+    return result
 
+def load_audio(audiopath, sr=16000):
+    # better load setting following: https://github.com/faroit/python_audio_loading_benchmark
+    if audiopath[-4:] == '.mp3':
+        # it uses torchaudio with sox backend to load mp3
+        audio, lsr = torchaudio_sox_load(audiopath)
+    else:
+        # it uses torchaudio soundfile backend to load all the others data type
+        audio, lsr = torchaudio_soundfile_load(audiopath)
+    # stereo to mono if needed
+    if audio.size(0) != 1:
+        audio = torch.mean(audio, dim=0, keepdim=True)
+    if lsr != sampling_rate:
+        audio = torchaudio.functional.resample(audio, lsr, sampling_rate)
+    if torch.any(audio > 10) or not torch.any(audio < 0):
+        print(f"Error with {audiopath}. Max={audio.max()} min={audio.min()}")
+    # clip audio invalid values
+    audio.clip_(-1, 1)
+    return audio.squeeze().cpu().numpy()
 
 class Wav2Vec2ConvEncoder:
 
@@ -89,7 +108,7 @@ class Wav2Vec2MOS(nn.Module):
         
         pred_mos = []
         for path in tqdm.tqdm(sorted(glob.glob(f"{path}/*.wav"))):
-            signal = librosa.load(path, sr=16_000)[0]
+            signal = load_audio(path, sr=16000) # librosa.load(path, sr=16_000)[0]
             x = self.processor(signal, return_tensors="pt", padding=True, sampling_rate=16000).input_values
             if self.cuda_flag:
                 x = x.cuda()
@@ -102,7 +121,7 @@ class Wav2Vec2MOS(nn.Module):
             return pred_mos
         
     def calculate_one(self, path):
-        signal = librosa.load(path, sr=16_000)[0]
+        signal = load_audio(path, sr=16000) # librosa.load(path, sr=16_000)[0]
         x = self.processor(signal, return_tensors="pt", padding=True, sampling_rate=16000).input_values
         with torch.no_grad():
             if self.cuda_flag:
