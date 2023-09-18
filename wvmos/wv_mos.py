@@ -7,6 +7,10 @@ import tqdm
 import numpy as np
 from torch import nn
 import torchaudio
+from torchaudio.backend.sox_io_backend import load as torchaudio_sox_load
+from torchaudio.backend.soundfile_backend import load as torchaudio_soundfile_load
+torch.set_num_threads(1)
+
 
 def extract_prefix(prefix, weights):
     result = OrderedDict()
